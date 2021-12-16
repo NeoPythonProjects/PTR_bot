@@ -16,6 +16,8 @@ def create_db():
   create_table_expenses(conn, cur)
   create_table_patterns(conn, cur)
   create_table_ieulrs(conn, cur)
+  create_table_lobs(conn, cur)
+  create_table_used_tradecodes(conn, cur)
   conn.close()
   return None
 
@@ -84,6 +86,23 @@ def create_table_ieulrs(conn, cur):
   conn.commit()
   return None
 
+def create_table_lobs(conn, cur):
+  sqlstr = """CREATE TABLE IF NOT EXISTS lobs (
+    lob VARCHAR(255)
+  )"""
+  cur.execute(sqlstr)
+  conn.commit()
+  return None
+
+def create_table_used_tradecodes(conn, cur):
+  sqlstr = """CREATE TABLE IF NOT EXISTS used_tradecodes (
+    lob VARCHAR(255),
+    tradecode VARCHAR(255),
+    gwp DOUBLE 
+  )"""
+  cur.execute(sqlstr)
+  conn.commit()
+  return None
 
 #sub functions
 #-------------
@@ -105,9 +124,7 @@ ORDER BY
   conn.close()
   return result
 
-
-
-def show_table(tablename, limit):
+def show_table(tablename, limit= 1000000000):
   # you can't pass table names as parameters
   # concatenate to sqlstr first
   sqlstr = f"SELECT * FROM {tablename} LIMIT {limit}"
@@ -117,7 +134,7 @@ def show_table(tablename, limit):
   result = cur.fetchall()
   for rec in result:
     print(rec)
-  return result
+  return None
 
 def clean_table(conn, cur, tablename):
   # you can't pass table names as parameters
@@ -166,6 +183,16 @@ def insert_record_ieulrs(cur, uy, lob, ieulr):
   cur.execute(sqlstr,(uy, lob, ieulr))
   return None
 
+def insert_record_lobs(cur, lob):
+  sqlstr = "INSERT INTO lobs VALUES (?)"
+  cur.execute(sqlstr,(lob,))
+  return None
+
+def insert_record_used_tradecodes(cur, lob, tradecode, gwp):
+  sqlstr = "INSERT INTO used_tradecodes VALUES (?,?,?)"
+  cur.execute(sqlstr,(lob, tradecode, gwp))
+  return None
+
 #uploading csv files
 #------------------
 #appreciate record by record is a slow way of doing it
@@ -176,7 +203,7 @@ def upload_all_tables():
   upload_expenses_csv()
   upload_patterns_csv()
   upload_ieulrs_csv()
-
+  upload_lobs_csv()
 
 def upload_claims_csv():
   conn = connect_to_db()
@@ -277,6 +304,20 @@ def upload_ieulrs_csv():
   conn.close()
   return None
 
+def upload_lobs_csv():
+  conn = connect_to_db()
+  cur = conn.cursor()
+  #clean tablename
+  clean_table(conn, cur, "lobs")
+  df = pd.read_csv("files/lines_of_business.csv")
+  for i, row in df.iterrows():
+    insert_record_lobs(
+      cur,
+      row['lob']
+      )
+  conn.commit()
+  conn.close()
+  return None  
 
 if __name__ == "__main__":
   pass
@@ -286,20 +327,27 @@ if __name__ == "__main__":
   #upload_ieulrs_csv()
   conn = connect_to_db()
   cur = conn.cursor()
-  delete_table(conn, cur, 'premium')
-  create_table_premium(conn, cur)
-  upload_premium_csv()
+  clean_table(conn, cur, 'claims')
+  upload_claims_csv()
+  #delete_table(conn, cur, 'premium')
+  #create_table_premium(conn, cur)
+  #upload_premium_csv()
   #create_table_ieulrs(conn, cur)
   #upload_ieulrs_csv()
   #create_table_patterns(conn, cur)
+  #create_table_lobs(conn, cur)
+  #upload_lobs_csv()
   #upload_patterns_csv()
-  #show_table("claims",5)
+  #show_table("claims",limit=50)
   #print("--------")
-  #show_table("premium",5)
+  #show_table("premium",limit=5)
   #print("--------")
-  #show_table("expenses",5)
+  #show_table("expenses",limit=5)
   #print("--------")
-  #show_table("patterns",5)
+  #show_table("patterns",limit=5)
   #print("--------")
   #show_table("ieulrs",100)
+  #show_table('lobs')
   #print(show_field_names('files/db.db','premium'))
+  #create_table_used_tradecodes(conn, cur)
+  show_table('used_tradecodes')
