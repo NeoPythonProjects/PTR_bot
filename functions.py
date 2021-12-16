@@ -22,8 +22,12 @@ def ultimates_by_lob_tradecode(lob, tradecode, claims_table='claims', premium_ta
   sqlstr = f"""SELECT p.lob, p.tradecode, p.uy, sub.dev_q, p.gwp_, sub.incd, i.ieulr, pat.FTU FROM ({sqlsubstrpremium}) as p
   INNER JOIN ({sqlsubstr}) as sub ON p.tradecode=sub.tradecode AND p.lob=sub.lob AND p.uy=sub.uy
   INNER JOIN ieulrs as i ON sub.uy = i.uy AND sub.lob = i.lob 
-  LEFT JOIN patterns as pat ON sub.dev_q = pat.dev and sub.lob = pat.lob
+  INNER JOIN patterns as pat ON sub.dev_q = pat.dev and sub.lob = pat.lob
   """
+  #todo: there are multiple dev per uy
+  # you need to calculate the BCL ultimates at claim level
+  # then calculate BF at claim level with uy-level ulr, but claim level dev
+
   conn = connect_to_db()
   cur = get_cursor(conn)
   print(sqlstr)
