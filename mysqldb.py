@@ -67,41 +67,8 @@ def create_table_expenses(conn, cur):
 def create_table_patterns(conn, cur):
   sqlstr = """CREATE TABLE IF NOT EXISTS patterns (
     lob VARCHAR(255),
-    '3' DOUBLE,
-    '6' DOUBLE,
-    '9' DOUBLE,
-    '12' DOUBLE,
-    '15' DOUBLE,
-    '18' DOUBLE,
-    '21' DOUBLE,
-    '24' DOUBLE,
-    '27' DOUBLE,
-    '30' DOUBLE,
-    '33' DOUBLE,
-    '36' DOUBLE,
-    '39' DOUBLE,
-    '42' DOUBLE,
-    '45' DOUBLE,
-    '48' DOUBLE,
-    '51' DOUBLE,
-    '54' DOUBLE,
-    '57' DOUBLE,
-    '60' DOUBLE,
-    '63' DOUBLE,
-    '66' DOUBLE,
-    '69' DOUBLE,
-    '72' DOUBLE,
-    '75' DOUBLE,
-    '78' DOUBLE,
-    '81' DOUBLE,
-    '84' DOUBLE,
-    '87' DOUBLE,
-    '90' DOUBLE,
-    '93' DOUBLE,
-    '96' DOUBLE,
-    '99' DOUBLE,
-    '102' DOUBLE,
-    primary key(lob)
+    dev INT,
+    FTU DOUBLE
   )"""
   cur.execute(sqlstr)
   conn.commit()
@@ -109,8 +76,8 @@ def create_table_patterns(conn, cur):
 
 def create_table_ieulrs(conn, cur):
   sqlstr = """CREATE TABLE IF NOT EXISTS ieulrs (
-    lob VARCHAR(255),
     uy INT,
+    lob VARCHAR(255),
     ieulr DOUBLE 
   )"""
   cur.execute(sqlstr)
@@ -120,6 +87,26 @@ def create_table_ieulrs(conn, cur):
 
 #sub functions
 #-------------
+def show_field_names(dbname, tablename):
+  sqlstr = f"""SELECT 
+  m.name as table_name, 
+  p.name as column_name
+FROM 
+  sqlite_master AS m
+JOIN 
+  pragma_table_info(m.name) AS p
+ORDER BY 
+  m.name, 
+  p.cid"""
+  conn = connect_to_db()
+  cur = conn.cursor()
+  cur.execute(sqlstr)
+  result = cur.fetchall()
+  conn.close()
+  return result
+
+
+
 def show_table(tablename, limit):
   # you can't pass table names as parameters
   # concatenate to sqlstr first
@@ -140,6 +127,17 @@ def clean_table(conn, cur, tablename):
   conn.commit()
   return None
 
+def delete_table(conn, cur, tablename):
+  sqlstr = f"DROP TABLE {tablename}"
+  cur.execute(sqlstr)
+  conn.commit()
+  return None
+
+def get_cursor(conn):
+  return conn.cursor()  
+
+def get_query_results(cur):
+  return cur.fetchall()  
 
 #inserting records
 #-----------------
@@ -158,9 +156,9 @@ def insert_record_expenses(cur, uy, lob, expense):
   cur.execute(sqlstr, (uy, lob, expense))
   return None
 
-def insert_record_patterns(cur, lob, _3, _6, _9, _12, _15, _18, _21, _24, _27, _30, _33, _36, _39, _42, _45, _48, _51, _54, _57,_60, _63, _66, _69, _72, _75, _78, _81, _84, _87, _90,  _93, _96,_99,_102):
-  sqlstr = """INSERT INTO patterns VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""
-  cur.execute(sqlstr,(lob, _3, _6, _9, _12, _15, _18, _21, _24, _27, _30, _33, _36, _39, _42, _45, _48, _51, _54, _57,_60, _63, _66, _69, _72, _75, _78, _81, _84, _87, _90,  _93, _96,_99,_102))
+def insert_record_patterns(cur, lob, dev, FTU):
+  sqlstr = """INSERT INTO patterns VALUES (?,?,?)"""
+  cur.execute(sqlstr,(lob, dev, FTU))
   return None
 
 def insert_record_ieulrs(cur, uy, lob, ieulr):
@@ -255,40 +253,8 @@ def upload_patterns_csv():
     insert_record_patterns(
       cur,
       row['lob'],
-      row['3'],
-      row['6'],
-      row['9'],
-      row['12'],
-      row['15'],
-      row['18'],
-      row['21'],
-      row['24'],
-      row['27'],
-      row['30'],
-      row['33'],
-      row['36'],
-      row['39'],
-      row['42'],
-      row['45'],
-      row['48'],
-      row['51'],
-      row['54'],
-      row['57'],
-      row['60'],
-      row['63'],
-      row['66'],
-      row['69'],
-      row['72'],
-      row['75'],
-      row['78'],
-      row['81'],
-      row['84'],
-      row['87'],
-      row['90'],
-      row['93'],
-      row['96'],
-      row['99'],
-      row['102']
+      row['dev'],
+      row['FTU']
       )
   conn.commit()
   conn.close()
@@ -311,18 +277,27 @@ def upload_ieulrs_csv():
   conn.close()
   return None
 
+
 if __name__ == "__main__":
   pass
   #create_db()
   #upload_all_tables()
   #upload_patterns_csv()
   #upload_ieulrs_csv()
-  show_table("claims",5)
-  print("--------")
-  show_table("premium",5)
-  print("--------")
-  show_table("expenses",5)
-  print("--------")
-  show_table("patterns",5)
-  print("--------")
-  show_table("ieulrs",5)
+  #conn = connect_to_db()
+  #cur = conn.cursor()
+  #delete_table(conn, cur, 'ieulrs')
+  #create_table_ieulrs(conn, cur)
+  #upload_ieulrs_csv()
+  #create_table_patterns(conn, cur)
+  #upload_patterns_csv()
+  #show_table("claims",5)
+  #print("--------")
+  #show_table("premium",5)
+  #print("--------")
+  #show_table("expenses",5)
+  #print("--------")
+  #show_table("patterns",5)
+  #print("--------")
+  #show_table("ieulrs",100)
+  print(show_field_names('files/db.db','premium'))

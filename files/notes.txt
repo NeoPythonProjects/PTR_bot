@@ -2,6 +2,7 @@ questions
 ---------
 1. can we use the extra dimensions that are in the claim data?
 
+
 inputs
 ------
 1. minimum premium threshold
@@ -14,6 +15,11 @@ claims, premium, expenses, patterns and ieulrs
 
 This database is just there for the proof of concept. In the proper application this will likely be a link into Snowflake tables
 
+double inner joins: INNER JOIN ... AND`
+multiple links to same table:
+  INNER JOIN ... as t1
+  INNER JOIN ... as t2
+
 filtering the data
 ------------------
 Filtering to happen on both claims and premiums to calculate BF
@@ -23,7 +29,7 @@ We could loop through all possible combos of dimensions, but that would increase
 
 field - combos
 //////////////
-We need to decide on a combo of dimensions, e.g. tradecode-dim2; the premium data needs to have these dimensions too
+We need to decide on a combo of dimensions, e.g. tradecode-dim2; the premium data needs to have these dimensions too; then group premium and claims tables to the same level
 Before calculating BF, check that the combo exceeds the --> minimum premium threshold <--
 Run a SQL query on the claims table to list all existing combos
 For these combos, check that they exceed the premium threshold; if so,s store in staging table.
@@ -34,6 +40,20 @@ row - combos
 ////////////
 We need to allow for several tradecodes to be selected together
 
+calculations
+------------
+select dimension, or more than one
+aggregate claims and premium table to that dimension (GROUP BY and WHERE)
+need lob, uy, dev, incd WHERE dimensions are as selected
+lob and uy inner join for ieulr
+lob and dev inner join for ftu
+lob and uy (and dimensions?) for premium
+calculate BF
+store in a file or database
+premium and claims tables to be aggregated to same level of dimensions
 
-
+will need separate queries for different number of dimensions
+- tradecodes
+- tradecodes and dim 2
+- trade codes and dim 3
 
