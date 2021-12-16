@@ -10,16 +10,16 @@ def tradecodes_used(lob, premium_threshold=0, claims_table="claims", premium_tab
   # pick up all tradecodes from the claim table
   # if the premium threshold is exceeded, add tradecode to output list
   #TODO returns a list of tradecodes that are being used in the current dataset
-  sqlsubstr = f"""SELECT c.tradecode FROM {claims_table} as c 
+  sqlsubstr = f"""SELECT c.lob, c.tradecode FROM {claims_table} as c 
   WHERE c.lob='{lob}'  
   GROUP BY c.tradecode 
   """
-  sqlsubstrpremium = f"""SELECT p.tradecode, SUM(p.gwp) as gwp_ FROM {premium_table} as p 
+  sqlsubstrpremium = f"""SELECT p.lob, p.tradecode, SUM(p.gwp) as gwp_ FROM {premium_table} as p 
   WHERE p.lob='{lob}'
   GROUP BY p.tradecode
   """
-  sqlstr = f"""SELECT p.tradecode, p.gwp_ FROM ({sqlsubstrpremium}) as p
-  INNER JOIN ({sqlsubstr}) as sub ON p.tradecode=sub.tradecode 
+  sqlstr = f"""SELECT p.lob, p.tradecode, p.gwp_ FROM ({sqlsubstrpremium}) as p
+  INNER JOIN ({sqlsubstr}) as sub ON p.tradecode=sub.tradecode AND p.lob=sub.lob
   WHERE p.gwp_ > {premium_threshold}  
   """
   conn = connect_to_db()
