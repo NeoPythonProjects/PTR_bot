@@ -1,5 +1,35 @@
 from mysqldb import connect_to_db, get_cursor, get_query_results
 
+def ultimates_by_tradecode(tradecode):
+  pass
+  #1. read list of all trde codes
+  # for each tradecode, calculate ultimates by LOB for each uy
+  #2. read list of tradecode combos
+
+def tradecodes_used(lob, premium_threshold=0, claims_table="claims", premium_table="premium"):
+  # pick up all tradecodes from the claim table
+  # if the premium threshold is exceeded, add tradecode to output list
+  #TODO returns a list of tradecodes that are being used in the current dataset
+  sqlsubstr = f"""SELECT c.tradecode FROM {claims_table} as c 
+  WHERE c.lob='{lob}'  
+  GROUP BY c.tradecode 
+  """
+  sqlsubstrpremium = f"""SELECT p.tradecode, SUM(p.gwp) as gwp_ FROM {premium_table} as p 
+  WHERE p.lob='{lob}'
+  GROUP BY p.tradecode
+  """
+  sqlstr = f"""SELECT p.tradecode, p.gwp_ FROM ({sqlsubstrpremium}) as p
+  INNER JOIN ({sqlsubstr}) as sub ON p.tradecode=sub.tradecode 
+  WHERE p.gwp_ > {premium_threshold}  
+  """
+  conn = connect_to_db()
+  cur = get_cursor(conn)
+  cur.execute(sqlstr)
+  result = cur.fetchall()
+  #result = list of tuples (tradecode, sum(gwp))
+  return result
+
+
 def BCL() -> float:
   pass
 
@@ -49,4 +79,5 @@ def calc_BCL_for_all(lob):
 
 if __name__ == "__main__":
   #print(get_ieulr("Onshore", 2010))
-  print(calc_BCL_for_all("Onshore"))
+  #print(calc_BCL_for_all("Onshore"))
+  print(tradecodes_used('Onshore', premium_threshold=2000000))
