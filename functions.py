@@ -13,7 +13,7 @@ def load_lobs() -> list:
   return [x[0] for x in results]
 
 
-def ultimates_by_lob_tradecode_uy(lob, tradecode, claims_table='claims', premium_table='premium') -> list:
+def ultimates_by_lob_tradecode_uy(lob, tradecode, claims_table='claims', premium_table='premium') -> pd.DataFrame:
   # aggregate claims for lob - tradecode - uy combos
   sqlsubstr = f"""SELECT c.lob, c.tradecode, c.uy, c.paid, c.case_, c.paid+c.case_ as incd, c.dev_q FROM {claims_table} as c 
   WHERE c.lob='{lob}' AND c.tradecode='{tradecode}'  
@@ -25,11 +25,12 @@ def ultimates_by_lob_tradecode_uy(lob, tradecode, claims_table='claims', premium
   GROUP BY p.lob, p.tradecode, p.uy
   """
   # link aggregated claims with aggregated premium and add ieulrs and ftu
-  sqlstr = f"""SELECT p.lob, p.tradecode, p.uy, sub.dev_q, p.gwp_, sub.incd, i.ieulr, pat.FTU, sub.incd*pat.ftu as bcl, sub.incd + ((1-(1/pat.ftu)) * i.ieulr * p.gwp_) as bf 
+  sqlstr = f"""SELECT p.lob, p.tradecode, p.uy, sub.dev_q, p.gwp_, sub.incd, i.ieulr, pat.FTU, sub.incd*pat.ftu as bcl, sub.incd + ((1-(1/pat.ftu)) * i.ieulr * p.gwp_) as bf, ex.expense, (sub.incd + ((1-(1/pat.ftu)) * i.ieulr * p.gwp_))/p.gwp_ + ex.expense as cor 
   FROM ({sqlsubstrpremium}) as p
   INNER JOIN ({sqlsubstr}) as sub ON p.tradecode=sub.tradecode AND p.lob=sub.lob AND p.uy=sub.uy
   INNER JOIN ieulrs as i ON sub.uy = i.uy AND sub.lob = i.lob 
   INNER JOIN patterns as pat ON sub.dev_q = pat.dev and sub.lob = pat.lob
+  LEFT JOIN expenses as ex ON sub.lob = ex.lob AND sub.uy = ex.uy
   """
   conn = connect_to_db()
   cur = get_cursor(conn)
@@ -37,16 +38,13 @@ def ultimates_by_lob_tradecode_uy(lob, tradecode, claims_table='claims', premium
   cur.execute(sqlstr)
   result = get_query_results(cur)
   #result is a list of tuples
-  columns = ['lob', 'tradecode', 'uy', 'dev', 'gwp', 'incd', 'ieulr', 'ftu', 'bcl', 'bf']
+  columns = ['lob', 'tradecode', 'uy', 'dev', 'gwp', 'incd', 'ieulr', 'ftu', 'bcl', 'bf', 'exp', 'cor']
   df_combos = pd.DataFrame(result)
   df_combos.columns = columns
   # for each combo, calculate ultimates each uy
   #2. read list of tradecode combos
   return df_combos
 
-
-def ultimates_by_lob_tradecodelist(lob, tradecodelist) -> list:
-  pass  
 
 def tradecodes_used(lob, premium_threshold=0, claims_table="claims", premium_table="premium") -> None:
   # pick up all tradecodes from the claim table

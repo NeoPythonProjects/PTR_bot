@@ -1,5 +1,6 @@
 import sqlite3
 import pandas as pd
+import decorators as decs
 
 
 #Create database
@@ -125,17 +126,14 @@ ORDER BY
   conn.close()
   return result
 
+@decs.show_records
 def show_table(tablename, limit= 1000000000):
   # you can't pass table names as parameters
   # concatenate to sqlstr first
-  sqlstr = f"SELECT * FROM {tablename} LIMIT {limit}"
-  conn = connect_to_db()
-  cur = conn.cursor()
-  cur.execute(sqlstr)
-  result = cur.fetchall()
-  for rec in result:
-    print(rec)
-  return None
+  sqlstr = f"""SELECT * 
+  FROM {tablename} 
+  LIMIT {limit}"""
+  return sqlstr
 
 def clean_table(conn, cur, tablename):
   # you can't pass table names as parameters
@@ -325,7 +323,7 @@ def update_premium():
   conn = connect_to_db()
   cur = conn.cursor()
   sqlstr = """UPDATE premium
-  SET gwp = gwp/100
+  SET gwp = gwp*2/100
   """  
   cur.execute(sqlstr)
   conn.commit()
@@ -355,13 +353,13 @@ if __name__ == "__main__":
   #print("--------")
   #show_table("premium",limit=5)
   #print("--------")
-  #show_table("expenses",limit=5)
+  #show_table("expenses",limit=10)
   #print("--------")
-  #show_table("patterns",limit=5)
+  show_table("patterns")
   #print("--------")
   #show_table("ieulrs",100)
   #show_table('lobs')
   #print(show_field_names('files/db.db','premium'))
   #create_table_used_tradecodes(conn, cur)
   #show_table('patterns', limit=10)
-  update_premium()
+  #update_premium()

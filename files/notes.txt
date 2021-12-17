@@ -11,6 +11,16 @@ inputs
  2.2. currently the claims table holds the curretn date; we could have the current uy as an input parameter instead of a data field; formula in 2.1. needs to be adjusted to take input parameter instead of data field
 
 
+description
+-----------
+the basic 'engine' is functions.ultimates_by_lob_tradecode_uy() which for a lob-tradecode combination calculates gwp, bcl, bf, cor and a few other items for each uy. 
+We can investigate trends over the uys for that combo
+We can search for exceptions in bcl, bf (or paid or case) or COR
+
+
+
+
+
 mysql database
 --------------
 holds 5 data tables, all with dummy data:
