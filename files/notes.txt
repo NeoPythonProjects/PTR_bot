@@ -6,12 +6,18 @@ questions
 inputs
 ------
 1. minimum premium threshold
+2. current uy; 
+  2.1. currently the claims table holds dev_q field which is the development of the claim based on ncurrent date and open date; however, we need the dev at uy level (current year - uy + 1)*4; this formula is applied during the upload_claims_csv() process instead of uploading the dev_q in the table. 
+ 2.2. currently the claims table holds the curretn date; we could have the current uy as an input parameter instead of a data field; formula in 2.1. needs to be adjusted to take input parameter instead of data field
 
 
 mysql database
 --------------
-holds 5 tables, all with dummy data:
+holds 5 data tables, all with dummy data:
 claims, premium, expenses, patterns and ieulrs
+
+process tables are added as needed, e.g. used_tradecodes holds the result of a query that shows the lob-tradecode combinations that are in use based on the claims data, premium data and premium threshold (all need to apply as linked via INNER JOINs). 
+-> aim is to reduce the number of needless permutations
 
 This database is just there for the proof of concept. In the proper application this will likely be a link into Snowflake tables
 
@@ -46,8 +52,8 @@ select dimension, or more than one
 aggregate claims and premium table to that dimension (GROUP BY and WHERE)
 need lob, uy, dev, incd WHERE dimensions are as selected
 lob and uy inner join for ieulr
-lob and dev inner join for ftu
-lob and uy (and dimensions?) for premium
+lob and dev (or uy) inner join for ftu (1-1 between dev and uy, so can link on either)
+lob and uy for premium
 calculate BF
 store in a file or database
 premium and claims tables to be aggregated to same level of dimensions

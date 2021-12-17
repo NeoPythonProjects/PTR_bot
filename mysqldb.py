@@ -1,6 +1,7 @@
 import sqlite3
 import pandas as pd
 
+
 #Create database
 #----------------
 def connect_to_db():
@@ -205,6 +206,7 @@ def upload_all_tables():
   upload_ieulrs_csv()
   upload_lobs_csv()
 
+
 def upload_claims_csv():
   conn = connect_to_db()
   cur = conn.cursor()
@@ -226,7 +228,7 @@ def upload_claims_csv():
       row['dim2'],
       row['dim3'],
       row['claim_type'],
-      row['dev_q']
+      (int(row['date_current'][-4:]) - int(row['date_open'][-4:]) + 1)*4
       )
   conn.commit()
   conn.close()
@@ -319,16 +321,27 @@ def upload_lobs_csv():
   conn.close()
   return None  
 
+def update_premium():
+  conn = connect_to_db()
+  cur = conn.cursor()
+  sqlstr = """UPDATE premium
+  SET gwp = gwp/100
+  """  
+  cur.execute(sqlstr)
+  conn.commit()
+  conn.close()
+
+
 if __name__ == "__main__":
   pass
   #create_db()
   #upload_all_tables()
   #upload_patterns_csv()
   #upload_ieulrs_csv()
-  conn = connect_to_db()
-  cur = conn.cursor()
-  clean_table(conn, cur, 'patterns')
-  upload_patterns_csv()
+  #conn = connect_to_db()
+  #cur = conn.cursor()
+  #clean_table(conn, cur, 'patterns')
+  #upload_patterns_csv()
   #delete_table(conn, cur, 'premium')
   #create_table_premium(conn, cur)
   #upload_premium_csv()
@@ -350,4 +363,5 @@ if __name__ == "__main__":
   #show_table('lobs')
   #print(show_field_names('files/db.db','premium'))
   #create_table_used_tradecodes(conn, cur)
-  show_table('patterns', limit=100)
+  #show_table('patterns', limit=10)
+  update_premium()
