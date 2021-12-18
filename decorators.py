@@ -1,6 +1,7 @@
 import functools
 import sqlite3
 
+
 def show_records(func):
   """ decorator that connects to db, creates cursor, executes cursor, prints query result line by line to shell and closes db connections
 
@@ -53,7 +54,7 @@ def insert_record(func):
   return wrapper_insert_record
 
 
-def interact_with_db(action):
+def execute_sql(action):
   """ decorator takes 1 'action' argument.
   It connects to db, creates cursor, executes cursor, commits to db if required and closes db connection.
 

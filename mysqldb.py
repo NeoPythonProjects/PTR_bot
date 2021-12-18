@@ -23,7 +23,8 @@ def create_db():
   conn.close()
   return None
 
-def create_table_claims(conn, cur):
+@decs.execute_sql('write')
+def create_table_claims() -> str:
   sqlstr = """CREATE TABLE IF NOT EXISTS claims (
     claim_id VARCHAR(255),
     uy INT,
@@ -40,11 +41,11 @@ def create_table_claims(conn, cur):
     dev_q INT,
     primary key (claim_id)
   )"""
-  cur.execute(sqlstr)
-  conn.commit()
-  return None
+  return sqlstr
 
-def create_table_premium(conn, cur):
+
+@decs.execute_sql('write')
+def create_table_premium() -> str:
   sqlstr = """CREATE TABLE IF NOT EXISTS premium (
     uy INT,
     lob VARCHAR(255),
@@ -54,61 +55,87 @@ def create_table_premium(conn, cur):
     gwp DOUBLE,
     policies INT  
   )"""
-  cur.execute(sqlstr)
-  conn.commit()
-  return None
+  return sqlstr
 
-def create_table_expenses(conn, cur):
+
+@decs.execute_sql('write')
+def create_table_expenses() -> str:
   sqlstr = """CREATE TABLE IF NOT EXISTS expenses (
     uy INT,
     lob VARCHAR(255),
     expense DOUBLE 
   )"""
-  cur.execute(sqlstr)
-  conn.commit()
-  return None
+  return sqlstr
 
-def create_table_patterns(conn, cur):
+
+@decs.execute_sql('write')
+def create_table_patterns() -> str:
   sqlstr = """CREATE TABLE IF NOT EXISTS patterns (
     lob VARCHAR(255),
     dev INT,
     FTU DOUBLE
   )"""
-  cur.execute(sqlstr)
-  conn.commit()
-  return None
+  return sqlstr
 
-def create_table_ieulrs(conn, cur):
+
+@decs.execute_sql('write')
+def create_table_ieulrs() -> str:
   sqlstr = """CREATE TABLE IF NOT EXISTS ieulrs (
     uy INT,
     lob VARCHAR(255),
     ieulr DOUBLE 
   )"""
-  cur.execute(sqlstr)
-  conn.commit()
-  return None
+  return sqlstr
 
-def create_table_lobs(conn, cur):
+
+@decs.execute_sql('write')
+def create_table_lobs() -> str:
   sqlstr = """CREATE TABLE IF NOT EXISTS lobs (
     lob VARCHAR(255)
   )"""
-  cur.execute(sqlstr)
-  conn.commit()
-  return None
+  return sqlstr
 
-def create_table_used_tradecodes(conn, cur):
+
+@decs.execute_sql('write')
+def create_table_used_tradecodes() -> str:
   sqlstr = """CREATE TABLE IF NOT EXISTS used_tradecodes (
     lob VARCHAR(255),
     tradecode VARCHAR(255),
     gwp DOUBLE 
   )"""
-  cur.execute(sqlstr)
-  conn.commit()
-  return None
+  return sqlstr
+
 
 #sub functions
 #-------------
-def show_field_names(dbname, tablename):
+# sqlstr builder for INSERT statements
+def build_insert_sqlstr(*args, **kwargs) -> str:
+  """sql string builder for INSERT statements
+  The sql string builder looks at the args tuple and adds the required number of ? to the sql string.
+
+  The insert statements only differ in terms of (i) number of arguments passed and (ii) tablename to insert into.
+  
+  The tablename can be passed as a named argument via f-string
+  The fields to be inserted can be passsed as positional arguments
+  
+  """
+  # **kwargs holds tablename
+  # *args hold the positional arguments
+  # example result: INSERT INTO claims VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+  for k,v in kwargs.items():
+    if k == 'tablename': tablename = v
+  sqlstr= f"INSERT INTO {tablename} VALUES ("
+  for el in args:
+    sqlstr = sqlstr + "?"
+    if args.index(el) < len(args)-1:
+      sqlstr = sqlstr + ","
+    else:
+      sqlstr = sqlstr + ")"  
+  return sqlstr
+
+
+@decs.execute_sql('read')
+def show_field_names() -> str:
   sqlstr = f"""SELECT 
   m.name as table_name, 
   p.name as column_name
@@ -119,78 +146,117 @@ JOIN
 ORDER BY 
   m.name, 
   p.cid"""
-  conn = connect_to_db()
-  cur = conn.cursor()
-  cur.execute(sqlstr)
-  result = cur.fetchall()
-  conn.close()
-  return result
-
-@decs.show_records
-def show_table(tablename, limit= 1000000000):
-  # you can't pass table names as parameters
-  # concatenate to sqlstr first
-  sqlstr = f"""SELECT * 
-  FROM {tablename} 
-  LIMIT {limit}"""
   return sqlstr
 
-def clean_table(conn, cur, tablename):
-  # you can't pass table names as parameters
-  # concatenate to sqlstr first
-  sqlstr = f"DELETE FROM {tablename}"
-  cur.execute(sqlstr)
-  conn.commit()
-  return None
 
-def delete_table(conn, cur, tablename):
+@decs.execute_sql('read')
+def show_table(*_,tablename, limit=1000000000) -> str:
+# the generic decorator uses args in the cur.execute statement
+# args is a tuple a positional arguments
+# the execute statment expexts the sql statement to be written using ?
+# args will then provide the values for the ?
+# Unfortuately, tablenames cannot be passed as variables using ?
+# therefore, use the f-string approach to feed in table names
+# but then the tablename should not appear in args
+# therefore, make table name a named argument, so it shows up in kwargs instead of args
+# for limit, i want a default value, so that makes it a named argument
+# which will not be in args, so pass that as an f-string variable too
+# for table, i don't want a default value, so i need to point out that
+# this is a named argument. Do that by showing the end of the postional
+# arguments as *_. that makes tablename a named argument
+
+# so, both tablename and limit are passed as named arguments:
+# tablename because you can't use the ? method with execute for table names
+# limit because i want a default value
+# there are therefore no positional arguments in args
+# this is fine as there are no ? in sql for which cur.execute is expecting an argument
+# all arguments are passed to the sql string via f-string, not ?
+  sqlstr = f"""SELECT * 
+  FROM  {tablename}
+  LIMIT {limit}
+  """  
+  return sqlstr
+
+
+@decs.execute_sql('write')
+def clean_table(*_, tablename):
+  # you can't pass table names as parameters
+  # concatenate to sqlstr first via f-string
+  sqlstr = f"DELETE FROM {tablename}"
+  return sqlstr
+
+
+@decs.execute_sql('write')
+def delete_table(*_, tablename):
   sqlstr = f"DROP TABLE {tablename}"
-  cur.execute(sqlstr)
-  conn.commit()
-  return None
+  return sqlstr
+
 
 def get_cursor(conn):
   return conn.cursor()  
 
+
 def get_query_results(cur):
   return cur.fetchall()  
 
+
 #inserting records
 #-----------------
-def insert_record_claims(cur, claim_id, uy, paid, case_, reported, date_open, date_current, lob, tradecode, dim2, dim3, claim_type, dev_q):
+@decs.execute_sql('write')
+def insert_record(*args, tablename) -> str:
+  """function replaces all the individual insert record functions
+  
+  arguments:
+  *args: variable number of positional arguments: the data fields
+  tablename: one named argument
+
+  function calls the build_insert_sqlstr() function to dynamically build up the sql string based on the table name and the number of passed postional arguments.
+
+  """
+  return build_insert_sqlstr(*args, tablename=tablename)
+
+
+@decs.execute_sql('write')
+def insert_record_claims(claim_id, uy, paid, case_, reported, date_open, date_current, lob, tradecode, dim2, dim3, claim_type, dev_q) -> str:
   sqlstr = """INSERT INTO claims VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"""
-  cur.execute(sqlstr,(claim_id, uy, paid, case_, reported, date_open, date_current, lob, tradecode, dim2, dim3, claim_type, dev_q))
-  return None
+  return sqlstr
 
-def insert_record_premium(cur, uy, lob, tradecode, dim2, dim3, gwp,policies):
-  sqlstr = "INSERT INTO premium VALUES (?,?,?,?,?,?,?)"
-  cur.execute(sqlstr, (uy, lob, tradecode, dim2, dim3, gwp,policies))  
-  return None
 
-def insert_record_expenses(cur, uy, lob, expense):
+@decs.execute_sql('write')
+def insert_record_premium(uy, lob, tradecode, dim2, dim3, gwp,policies) -> str:
+  sqlstr = "INSERT INTO premium VALUES (?,?,?,?,?,?,?)"  
+  return sqlstr
+
+
+@decs.execute_sql('write')
+def insert_record_expenses(uy, lob, expense) -> str:
   sqlstr = "INSERT INTO expenses VALUES (?,?,?)"
-  cur.execute(sqlstr, (uy, lob, expense))
-  return None
+  return sqlstr
 
-def insert_record_patterns(cur, lob, dev, FTU):
+
+@decs.execute_sql('write')
+def insert_record_patterns(lob, dev, FTU) -> str:
   sqlstr = """INSERT INTO patterns VALUES (?,?,?)"""
-  cur.execute(sqlstr,(lob, dev, FTU))
-  return None
+  return sqlstr
 
-def insert_record_ieulrs(cur, uy, lob, ieulr):
+
+@decs.execute_sql('write')
+def insert_record_ieulrs(uy, lob, ieulr) -> str:
   sqlstr = "INSERT INTO ieulrs VALUES (?,?,?)"
-  cur.execute(sqlstr,(uy, lob, ieulr))
-  return None
+  return sqlstr
 
-def insert_record_lobs(cur, lob):
+
+@decs.execute_sql('write')
+def insert_record_lobs(lob) -> str:
   sqlstr = "INSERT INTO lobs VALUES (?)"
-  cur.execute(sqlstr,(lob,))
-  return None
+  return sqlstr
 
-def insert_record_used_tradecodes(cur, lob, tradecode, gwp):
+
+@decs.execute_sql('write')
+def insert_record_used_tradecodes(lob, tradecode, gwp) -> str:
   sqlstr = "INSERT INTO used_tradecodes VALUES (?,?,?)"
-  cur.execute(sqlstr,(lob, tradecode, gwp))
-  return None
+  return sqlstr
+
 
 #uploading csv files
 #------------------
@@ -205,15 +271,14 @@ def upload_all_tables():
   upload_lobs_csv()
 
 
-def upload_claims_csv():
-  conn = connect_to_db()
-  cur = conn.cursor()
-  #clean tablename
-  clean_table(conn, cur, "claims")
+def upload_claims_csv() -> None:
+  # clean table has been decorated with execute_sql('write')
+  clean_table(tablename="claims")
   df = pd.read_csv("files/claim_table_random.csv")
   for i, row in df.iterrows():
-    insert_record_claims(
-      cur, 
+    print(f'reading row {i} of {len(df)}')
+    # insert_record is decorated with execute_sql('write')
+    insert_record(
       row['claim_id'],
       row['uy'],
       row['paid'],
@@ -226,108 +291,94 @@ def upload_claims_csv():
       row['dim2'],
       row['dim3'],
       row['claim_type'],
-      (int(row['date_current'][-4:]) - int(row['date_open'][-4:]) + 1)*4
+      (int(row['date_current'][-4:]) - int(row['date_open'][-4:]) + 1)*4,
+      tablename='claims'
       )
-  conn.commit()
-  conn.close()
   return None
 
-def upload_premium_csv():
-  conn = connect_to_db()
-  cur = conn.cursor()
-  #clean tablename
-  clean_table(conn, cur, "premium")
+
+def upload_premium_csv() -> None:
+  #clean tablename has been decorated with execute_sql('write')
+  clean_table(tablename="premium")
   df = pd.read_csv("files/premium_table_random.csv")
   for i, row in df.iterrows():
-    insert_record_premium(
-      cur,
+    # has been decorated with execute_sql('write')
+    insert_record(
       row['uy'],
       row['lob'],
       row['tradecode'],
       row['dim2'],
       row['dim3'],
       row['gwp'],
-      row['policies']
+      row['policies'],
+      tablename='premium'
       )
-  conn.commit()
-  conn.close()
   return None
   
-def upload_expenses_csv():
-  conn = connect_to_db()
-  cur = conn.cursor()
-  #clean tablename
-  clean_table(conn, cur, "expenses")
+
+def upload_expenses_csv() -> None:
+  #clean tablename has been decorated with execute_sql('write')
+  clean_table(tablename="expenses")
   df = pd.read_csv("files/expense_table_random.csv")
   for i, row in df.iterrows():
-    insert_record_expenses(
-      cur,
+    # has been decorated with execute_sql('write')
+    insert_record(
       row['uy'],
       row['lob'],
-      row['expense']
+      row['expense'],
+      tablename='expenses'
       )
-  conn.commit()
-  conn.close()
   return None
 
-def upload_patterns_csv():
-  conn = connect_to_db()
-  cur = conn.cursor()
-  #clean tablename
-  clean_table(conn, cur, "patterns")
+
+def upload_patterns_csv() -> None:
+  #clean tablename has been decorated with execute_sql('write')
+  clean_table(tablename="patterns")
   df = pd.read_csv("files/patterns_FTU.csv")
   for i, row in df.iterrows():
-    insert_record_patterns(
-      cur,
+    # has been decorated with execute_sql('write')
+    insert_record(
       row['lob'],
       row['dev'],
-      row['FTU']
+      row['FTU'],
+      tablename='patterns'
       )
-  conn.commit()
-  conn.close()
   return None
 
-def upload_ieulrs_csv():
-  conn = connect_to_db()
-  cur = conn.cursor()
-  #clean tablename
-  clean_table(conn, cur, "ieulrs")
+
+def upload_ieulrs_csv() -> None:
+  #clean tablename has been decorated with execute_sql('write')
+  clean_table(tablename="ieulrs")
   df = pd.read_csv("files/IEULRs.csv")
   for i, row in df.iterrows():
-    insert_record_ieulrs(
-      cur,
+    # has been decorated with execute_sql('write')
+    insert_record(
       row['uy'],
       row['lob'],
-      row['ieulr']
+      row['ieulr'],
+      tablename='ieulrs'
       )
-  conn.commit()
-  conn.close()
   return None
 
-def upload_lobs_csv():
-  conn = connect_to_db()
-  cur = conn.cursor()
-  #clean tablename
-  clean_table(conn, cur, "lobs")
+
+def upload_lobs_csv() -> None:
+  #clean tablename has been decorated with execute_sql('write')
+  clean_table(tablename="lobs")
   df = pd.read_csv("files/lines_of_business.csv")
   for i, row in df.iterrows():
+    # has been decorated with execute_sql('write')
     insert_record_lobs(
-      cur,
       row['lob']
       )
-  conn.commit()
-  conn.close()
   return None  
 
-def update_premium():
-  conn = connect_to_db()
-  cur = conn.cursor()
+
+@decs.execute_sql('write')
+def update_premium() -> str:
   sqlstr = """UPDATE premium
   SET gwp = gwp*2/100
   """  
-  cur.execute(sqlstr)
-  conn.commit()
-  conn.close()
+  return sqlstr
 
 
 if __name__ == "__main__":
@@ -336,26 +387,20 @@ if __name__ == "__main__":
   #upload_all_tables()
   #upload_patterns_csv()
   #upload_ieulrs_csv()
-  #conn = connect_to_db()
-  #cur = conn.cursor()
-  #clean_table(conn, cur, 'patterns')
-  #upload_patterns_csv()
-  #delete_table(conn, cur, 'premium')
-  #create_table_premium(conn, cur)
+  #clean_table(tablename = 'patterns')
+  #upload_claims_csv()
   #upload_premium_csv()
-  #create_table_ieulrs(conn, cur)
+  upload_expenses_csv()
   #upload_ieulrs_csv()
-  #create_table_patterns(conn, cur)
-  #create_table_lobs(conn, cur)
   #upload_lobs_csv()
   #upload_patterns_csv()
-  #show_table("claims",limit=50)
+  show_table(tablename='expenses', limit=10)
   #print("--------")
   #show_table("premium",limit=5)
   #print("--------")
   #show_table("expenses",limit=10)
   #print("--------")
-  show_table("patterns")
+  #show_table("patterns")
   #print("--------")
   #show_table("ieulrs",100)
   #show_table('lobs')

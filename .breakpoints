@@ -3,9 +3,17 @@
     "decorators.py": [
       {
         "id": "df9c4783-8e18-4fcb-820b-4b908543bef9",
-        "line": 47,
-        "version": 2801,
-        "index": 1708
+        "line": 48,
+        "version": 3189,
+        "index": 1709
+      }
+    ],
+    "mysqldb.py": [
+      {
+        "id": "446c0f21-bf2c-4114-a2fb-9d8dfb22d29e",
+        "line": 328,
+        "version": 8323,
+        "index": 8630
       }
     ]
   }
