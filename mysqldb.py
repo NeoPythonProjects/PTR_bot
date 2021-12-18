@@ -212,56 +212,58 @@ def insert_record(*args, tablename) -> str:
 
   function calls the build_insert_sqlstr() function to dynamically build up the sql string based on the table name and the number of passed postional arguments.
 
+  decorated with execute_sql('write') for database interaction
   """
   return build_insert_sqlstr(*args, tablename=tablename)
 
 
-@decs.execute_sql('write')
-def insert_record_claims(claim_id, uy, paid, case_, reported, date_open, date_current, lob, tradecode, dim2, dim3, claim_type, dev_q) -> str:
-  sqlstr = """INSERT INTO claims VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"""
-  return sqlstr
+# @decs.execute_sql('write')
+# def insert_record_claims(claim_id, uy, paid, case_, reported, date_open, date_current, lob, tradecode, dim2, dim3, claim_type, dev_q) -> str:
+#   sqlstr = """INSERT INTO claims VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"""
+#   return sqlstr
 
 
-@decs.execute_sql('write')
-def insert_record_premium(uy, lob, tradecode, dim2, dim3, gwp,policies) -> str:
-  sqlstr = "INSERT INTO premium VALUES (?,?,?,?,?,?,?)"  
-  return sqlstr
+# @decs.execute_sql('write')
+# def insert_record_premium(uy, lob, tradecode, dim2, dim3, gwp,policies) -> str:
+#   sqlstr = "INSERT INTO premium VALUES (?,?,?,?,?,?,?)"  
+#   return sqlstr
 
 
-@decs.execute_sql('write')
-def insert_record_expenses(uy, lob, expense) -> str:
-  sqlstr = "INSERT INTO expenses VALUES (?,?,?)"
-  return sqlstr
+# @decs.execute_sql('write')
+# def insert_record_expenses(uy, lob, expense) -> str:
+#   sqlstr = "INSERT INTO expenses VALUES (?,?,?)"
+#   return sqlstr
 
 
-@decs.execute_sql('write')
-def insert_record_patterns(lob, dev, FTU) -> str:
-  sqlstr = """INSERT INTO patterns VALUES (?,?,?)"""
-  return sqlstr
+# @decs.execute_sql('write')
+# def insert_record_patterns(lob, dev, FTU) -> str:
+#   sqlstr = """INSERT INTO patterns VALUES (?,?,?)"""
+#   return sqlstr
 
 
-@decs.execute_sql('write')
-def insert_record_ieulrs(uy, lob, ieulr) -> str:
-  sqlstr = "INSERT INTO ieulrs VALUES (?,?,?)"
-  return sqlstr
+# @decs.execute_sql('write')
+# def insert_record_ieulrs(uy, lob, ieulr) -> str:
+#   sqlstr = "INSERT INTO ieulrs VALUES (?,?,?)"
+#   return sqlstr
 
 
-@decs.execute_sql('write')
-def insert_record_lobs(lob) -> str:
-  sqlstr = "INSERT INTO lobs VALUES (?)"
-  return sqlstr
+# @decs.execute_sql('write')
+# def insert_record_lobs(lob) -> str:
+#   sqlstr = "INSERT INTO lobs VALUES (?)"
+#   return sqlstr
 
 
-@decs.execute_sql('write')
-def insert_record_used_tradecodes(lob, tradecode, gwp) -> str:
-  sqlstr = "INSERT INTO used_tradecodes VALUES (?,?,?)"
-  return sqlstr
+# @decs.execute_sql('write')
+# def insert_record_used_tradecodes(lob, tradecode, gwp) -> str:
+#   sqlstr = "INSERT INTO used_tradecodes VALUES (?,?,?)"
+#   return sqlstr
 
 
 #uploading csv files
 #------------------
 #appreciate record by record is a slow way of doing it
 #live app will work of Snowflake so this test code will become obsolete
+
 def upload_all_tables():
   upload_claims_csv()
   upload_premium_csv()
@@ -367,8 +369,9 @@ def upload_lobs_csv() -> None:
   df = pd.read_csv("files/lines_of_business.csv")
   for i, row in df.iterrows():
     # has been decorated with execute_sql('write')
-    insert_record_lobs(
-      row['lob']
+    insert_record(
+      row['lob'],
+      tablename='lobs'
       )
   return None  
 
@@ -390,11 +393,11 @@ if __name__ == "__main__":
   #clean_table(tablename = 'patterns')
   #upload_claims_csv()
   #upload_premium_csv()
-  upload_expenses_csv()
+  #upload_expenses_csv()
   #upload_ieulrs_csv()
   #upload_lobs_csv()
   #upload_patterns_csv()
-  show_table(tablename='expenses', limit=10)
+  show_table(tablename='used_tradecodes', limit=10)
   #print("--------")
   #show_table("premium",limit=5)
   #print("--------")

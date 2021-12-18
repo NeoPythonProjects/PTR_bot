@@ -63,6 +63,7 @@ def execute_sql(action):
   argument: action can be 'read' or 'write'
   'read' lists the query results line by line to shell
   'write' writes to database
+  'runquery' returns the query result
   
   func: returns a sql string where args are passed as ? as part of execute and kwargs are passed as f-string variables (cur.execute doesn't accept named arguments)
   """ 
@@ -71,6 +72,7 @@ def execute_sql(action):
   # needs an extra level that accepts the argument and return a decorator
   #action can be (i) write or (ii) read
   def decorator(func):
+    # keep introspection of inner functions intact
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
       #connect to database
@@ -84,9 +86,13 @@ def execute_sql(action):
         conn.commit()
       elif action == "read":
         for el in result:
-          print(el)    
+          print(el) 
+      elif action == 'runquery':
+        result = result.fetchall()
+        # in this case return the results, not the sqlstr
+        return result
       conn.close()
-      #return frunction object
+      #return function object
       return sqlstr
     return wrapper
   return decorator

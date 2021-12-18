@@ -4,16 +4,42 @@
       {
         "id": "df9c4783-8e18-4fcb-820b-4b908543bef9",
         "line": 48,
-        "version": 3189,
+        "version": 3443,
         "index": 1709
+      }
+    ],
+    "functions.py": [
+      {
+        "id": "e50e8762-87e6-42e4-a6b3-f63d7723b25d",
+        "line": 23,
+        "version": 7268,
+        "index": 619
+      },
+      {
+        "id": "fa129287-9584-4eff-b5f1-8a1eed8f1a5b",
+        "line": 49,
+        "version": 7268,
+        "index": 1690
+      },
+      {
+        "id": "7fe29be8-e754-4de7-b59a-4e0b1a9b273f",
+        "line": 58,
+        "version": 7268,
+        "index": 2046
+      },
+      {
+        "id": "e872e5f4-01fd-45b0-9194-b72dcfb11908",
+        "line": 178,
+        "version": 7268,
+        "index": 7148
       }
     ],
     "mysqldb.py": [
       {
         "id": "446c0f21-bf2c-4114-a2fb-9d8dfb22d29e",
-        "line": 328,
-        "version": 8323,
-        "index": 8630
+        "line": 342,
+        "version": 9195,
+        "index": 9166
       }
     ]
   }

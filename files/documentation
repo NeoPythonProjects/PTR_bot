@@ -1,0 +1,65 @@
+PTR - bot
+=========
+
+---------------------------------------------
+|version control                            |
+|-------------------------------------------|
+|Author: Steven Loyens                      |
+|Date Created: 15/12/2021                   |
+|Last Modified: 18/12/2021                  |
+|                                           |
+|versions                                   |
+|1.0 Initial draft                          |
+---------------------------------------------
+
+Table of Contents
+-----------------
+1. Objective
+2. Notes for future development
+3. Structure
+  3.1. General Structure
+  3.2. Database
+  3.3. Decorators
+    3.3.1. General
+    3.3.2. Postional versus named arguments
+
+3.2. Database
+-------------
+
+sqlstr builder
+
+3.3. Decorators
+--------------
+3.3.1. General
+I've built in a few decorators to manage the interaction with the database. The Proof of Concept structure uses a mysql database (sqlite3) but this is expected to be replaced by a Snowflake or similar database. By centralising the database interaction via decorators, updating the database connections should be more manageable.
+
+There are plenty of notes in the code itself, but it's worth summarising the idea here in the general documentation.
+
+I have left all decorators in decorators.py as it's maybe easier to follow how they work by starting with siple examples, but the main decorator, which combines functionality form the others, is execute_sql(action).
+
+There are 3 potential actions:
+1. read: a sql string will be executed and the results printed line by line to the shell
+2. write: a sql string will be executed and the results are committed to the database
+3. runquery: a sql string will be executed and the results are passed back as data set, i.e. the result of the fetchall() method on the cursor object
+
+The structure is that of a decorator that takes arguments, in our case 'action'. This requires an extra level of nesting to pass through the argument to the wrapper function. A great introduction is here:
+https://realpython.com/primer-on-python-decorators/
+
+3.3.2 Postional versus named arguments
+The use of positional and named arguments is determined by the execution of:
+
+        cur.execute(sqlstr, arg)
+
+Firstly, the execute method of the cursor object doesn't accept named arguments. This is reflected in the conventional args reference.I use args, the tuple of positional arguments, as opposed to *args, the packing of the individual arguments into a tuple, as cur.execute expects a tuple as second argument.
+Secondly, cur.execute will replace each ? in the sqlstr with an element from the args tuple.
+Thirdly, there is another way of passing variables into a sqlstr, using the f-string approach. You need to build the f-string first, pass in the variables, and then execute via cur.execute
+Fourthly, tablenames cannot be passed as variables in the cur.execute method
+
+Putting all this together, the approach is as follows:
+1. table names have to be passed into the sqlstr via the f-string approach. No ? will be used for table names, as this isn't allowed.
+2. table names should therefore not be in the args tuple, as there is no ? for them in the sqlstr. 
+3 Thereofore, table names are passed as named arguments intot he sqlstr via f-string approach
+4. data elements can also be passed as either positional arguments (representing a ? in the sqlstr) or named arguments via f-string. 
+5. For nested sqlstr's i've tended to use f-strings and have therefore needed to pass some data elements as named arguments instead of positional arguments. That's why some functions have *_ as a first argument, i.e. the packing of all positional arguments, whcih effectively indicates the start of the named arguments section. That's how you can have named arguments even if they have no default value.
+6. the key is that ? in the sqlstr need to match up with the positional arguments in args.
+
