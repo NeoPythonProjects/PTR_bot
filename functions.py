@@ -14,7 +14,6 @@ def output_table(lob, tradecode) -> str:
 
 @decs.execute_sql('runquery')
 def ouput_table_grouped_cursor() -> str:
-  # named arguments passed into f-string
   return """SELECT lob, tradecode
   FROM output
   GROUP BY lob, tradecode
@@ -33,14 +32,13 @@ def result_to_output_df(result: list) -> pd.DataFrame:
   return df
   
 
-
 # functions to read used_tradecodes table
 #----------------------------------------
 @decs.execute_sql('runquery')
 def load_used_tradecodes_cursor():
   """function retrieves existing lob-tradecode combos from the used_tradecodes table
 
-  returns a sqlite3 cursor object
+  returns a list  as a result of cursor,fetchall() via sqlite3
   """
   return "SELECT * FROM used_tradecodes"
 
@@ -62,8 +60,7 @@ def load_lobs_cursor():
   
   return: cursor object, not a sqlstr; the undecorated function returns a sqlstr that feeds into the decorator, which, for action option 'runquery' returns a cursor object
   """
-  sqlstr = "SELECT lob FROM lobs"
-  return sqlstr
+  return "SELECT lob FROM lobs"
   
 
 def load_lobs() -> list:
@@ -146,9 +143,9 @@ def load_tradecodelists() -> pd.DataFrame:
 # ------------------------------------
 @decs.execute_sql('runquery')
 def ultimates_by_lob_tradecode_uy_cursor(*_, lob, tradecode, claims_table='claims', premium_table='premium'):
-  # sqlstr will have no ? in it, so args must be empty
-  # for the decorator to work
-  # -> make all arguments named arguments
+  # sqlstr will have no ? in it, so args must be empty for the decorator to work
+  # -> make all arguments named arguments using *_ which packs all positional arguments - which can be zero, intp the variable _;
+  # in this case, it will be zero positional arguments, so I've used dummy variable _
   # aggregate claims for lob - tradecode - uy combos
   sqlsubstr = f"""SELECT c.lob, c.tradecode, c.uy, c.paid, c.case_, c.paid+c.case_ as incd, c.dev_q FROM {claims_table} as c 
   WHERE c.lob='{lob}' AND c.tradecode='{tradecode}'  
@@ -258,6 +255,6 @@ if __name__ == "__main__":
   #'tr1',
   #claims_table='claims'))
   #print(ultimates_by_lob_tradecodelist_uy_cursor(lob='Onshore', tradecodelist=['tr1','tr5','tr7'], claims_table='claims', premium_table='premium'))
-  print(ultimates_by_lob_multiple_tradecodes_uy('Onshore',['tr1','tr6','tr9','tr5']))
+  #print(ultimates_by_lob_multiple_tradecodes_uy('Onshore',['tr1','tr6','tr9','tr5']))
   
   

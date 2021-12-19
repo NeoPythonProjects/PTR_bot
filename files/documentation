@@ -6,7 +6,7 @@ PTR - bot
 |-------------------------------------------|
 |Author: Steven Loyens                      |
 |Date Created: 15/12/2021                   |
-|Last Modified: 18/12/2021                  |
+|Last Modified: 19/12/2021                  |
 |                                           |
 |versions                                   |
 |1.0 Initial draft                          |
@@ -14,6 +14,7 @@ PTR - bot
 
 Table of Contents
 -----------------
+0. Notes to team
 1. Objective
 2. Notes for future development
 3. Structure
@@ -21,15 +22,98 @@ Table of Contents
   3.2. Database
   3.3. Decorators
     3.3.1. General
-    3.3.2. Postional versus named arguments
+    3.3.2. Positional versus named arguments
+
+0. Notes to team
+----------------
+There are a few interesting thing to look at in this project. I've learned a lot in the few hours I spent on this project. Here are a few:
+
+1. building yor own decorators and how useful that can be. My number of lines of code has reduced quite a bit by using the execute_sql(action) decorator. Have a look at how it works and think how yo can make your own code more maintanable and readable using decorators. 
+execute_sql(action) is a decorator that takes an argument (action) which introduces a level of complexity, and which has as a purpose to combine multiple decorators without arguments into one. Therefore, in decorators.py, I have left the original decorators for you to look at to build up your knowledge gradually, as I did when I built them.
+This is a great link for decorators:
+https://realpython.com/primer-on-python-decorators/
+
+2. Use of positional and named arguments
+This is explained in the code itself, and in this documentation too, but I was impressed by the ease with which you can use packing of positional arguments into *args and of named arguments into **kwarggs to make your formulas and decorators more generic. Also, check out the *_ trick to create named arguments without assigning a default value.
+
+3. combining all that, check out the insert_record() function which replaces all my individual insert_record_for_table_xxx functions, using decorators and a sqlstr-builder via *args. remember that *args packs all positional elements into tuple args and that **kwargs packs all individual named arguments into dictionary kwargs
+
+4. look at, for example, ultimates_by_lob_tradecodelist_uy_cursor() in functions to for nested SQL statements with variables, and the use of *_ to combine the use of named arguments via f-strings and positional arguments for ? in sqlstr, to line up with number of positional arguments in the args tuple
+
+
+1. Objective
+------------
+To provide a proof of concept (PoC) for a PTR bot. The bot will loop through all 'relevant' combinations of LOB-tradecode to:
+1. project basic chain ladder
+2. project bornhuetter-ferguson
+
+'Relevant' lob-tradecode combinations are defined in this PoC as 
+1. existing in the claims data
+2. existing in the premium data
+3. with gwp exceeded a user-defined premium_threshold
+
+The user can also pre-define a combination of tradecodes for which the data will be aggregated, i.e. the sum of the incurred for those tradecodes will be analysed.
+In the PoC, the individual tradecodes in user-defined combos are still analyses separately.
+
+The bot runs statistics on the output based on pre-defined kpi's. the PoC has the following tests built in:
+1. cor over a certain threshold; the test shows lob-tradecode-uy's where cor exceeeds cor_threshold (see cor_kpi in database)
+2. trends in cor, ulr and ieulr: if the slope coefficient of the linear regression applied to all the uy's of a given lob-tradecode combo exceeds a trend_treshold (or is below minus the trend-threshold, results are saved in table trend_kpi
+
+
+2. Notes for future development
+------------------------------
+There will be many as this is just a proof of concept, but consider the following:
+
+1. move to database framework that can deal with larger data volumes and that allows for data injection in one go instad of record-by-record. slite3 has jsut been used to illustrate the idea
+2. exclude from the analysis tradecodes that have been included in a user-defined combo. The fact that the user wants them to be analysed together with other tradecodes suggest analysing them on their own is not very valuable
+3. Adding automated analysis for more dimensions than just lob-tradecode
+
+
+3. Structure
+------------
+3.1. General structure
+----------------------
+main.py 
+to trigger the process
+
+functions.py 
+holds functions
+
+mysqldb.py 
+was intented to only have the database interaction, but the kine between functions and database interaction is not clear. However, i've imported mysqldb.py into functions.py, so you can trigger the mysqldb functions via importing fucntions. For example, in main.py insert_record() is triggered as functions.insert_record() although it actually lives in mysqldb.py
+
+kpi.py 
+holds the kpi functionality
+
+decorators 
+holds the decorators
+
 
 3.2. Database
 -------------
+interaction with mysql db 'files/db/db' via sqlite3 streamlined using decorators. The interaction is split in 2: the first function is decorated and executes the cursor object. The second function uses the results of the execution of cursor object. The fetchall() method in the decorator returns te query results as a list of tuples, with each tuple representing one record.
+The first functions return a string (hence -> str) to feed the decorator, but the decorator then returns the results of the execution and fetchall() methods on the cursor object. The decorated function therefore returns a list of tuples.
+Use should be obvious based on function name with the first function name ending in '_cursor'.
 
-decorator -> function split in 2: one to retrieve the cursor object, one to use the curson object
-the first return a string to feed the decorator; the decorator then returns a cursor object; hence teh -> cursor and not -> str
+To reduce the number of functions needed, I've included a sqlstr builder, that based on the number of positional arguments passed via the args tuple adds the required number of ? to the sqlstr, such that the ? in the sqlstr and the positional arguments in args line up, as is required in cur.execute(sqlstr, args)
 
-sqlstr builder
+for detailed databse strucutre run mysqldb.show_field_names()
+Tables are as follows:
+
+Data tables (from csv files)
+claims
+premium
+expenses
+patterns
+ieulrs
+lobs
+tradecodelists - user-defined tradecode combinations
+
+Process or output tables:
+used_tradecodes
+output - main output table for bf ultimates
+cor_kpi - exceptions iro cor_threshold
+trend_kpi - exceptions iro trend_threshold for cor, ieulr, ulr
 
 
 3.3. Decorators
@@ -66,4 +150,5 @@ Putting all this together, the approach is as follows:
 4. data elements can also be passed as either positional arguments (representing a ? in the sqlstr) or named arguments via f-string. 
 5. For nested sqlstr's i've tended to use f-strings and have therefore needed to pass some data elements as named arguments instead of positional arguments. That's why some functions have *_ as a first argument, i.e. the packing of all positional arguments, whcih effectively indicates the start of the named arguments section. That's how you can have named arguments even if they have no default value.
 6. the key is that ? in the sqlstr need to match up with the positional arguments in args.
+
 

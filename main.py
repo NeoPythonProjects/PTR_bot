@@ -4,11 +4,9 @@ import kpi
 
 
 def main() -> None:
-  pass
-  #store_used_tradecodes()
-  #loop_through_lob_tradecode_combos()
-  #print("end of loop")
-  #loop_through_user_defined_tradecode_lists()
+  store_used_tradecodes()
+  loop_through_lob_tradecode_combos()
+  loop_through_user_defined_tradecode_lists()
   run_statistics(1, 0.04)
 
 

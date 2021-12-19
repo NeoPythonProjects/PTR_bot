@@ -400,6 +400,9 @@ def upload_lobs_csv() -> None:
 
 @decs.execute_sql('write')
 def update_premium() -> str:
+  """ premium data in csv gives stupid loss ratios
+  so i've run this adjustment on it  
+  """
   sqlstr = """UPDATE premium
   SET gwp = gwp*2/100
   """  
@@ -429,4 +432,4 @@ if __name__ == "__main__":
   #delete_table(tablename='trend_kpi')
   #create_table_trend_kpi()
   #insert_record("Offshore","['tr15','tr16']", tablename="tradecodelists")
-  show_table(tablename='trend_kpi')
+ #show_table(tablename='trend_kpi')
