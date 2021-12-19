@@ -20,6 +20,8 @@ def load_lobs() -> list:
   return [x[0] for x in results]
 
 
+# functions for lists of tradecodes
+#----------------------------------
 def sql_builder_claims_where_tradecodelist(lob, lst, claims_table='claims') -> str:
   sqlsubstr_1 = f"SELECT c.lob, c.tradecode, c.uy, c.paid, c.case_, c.paid+c.case_ as incd, c.dev_q FROM {claims_table} as c "
   sqlsubstr_3= " GROUP BY c.lob, c.uy"
@@ -35,10 +37,10 @@ def sql_builder_claims_where_tradecodelist(lob, lst, claims_table='claims') -> s
 
 def sql_builder_premium_where_tradecodelist(lob, lst,premium_table='premium') -> str:
   sqlsubstr_1 = f"SELECT p.lob, p.tradecode, p.uy, SUM(p.gwp) as gwp_ FROM {premium_table} as p "
-  sqlsubstr_3= " GROUP BY c.lob, c.uy"
-  sqlsubstr_2 = f"WHERE c.lob='{lob}' AND ("  
+  sqlsubstr_3= " GROUP BY p.lob, p.uy"
+  sqlsubstr_2 = f"WHERE p.lob='{lob}' AND ("  
   for el in lst:
-    sqlsubstr_2 = sqlsubstr_2 + f"c.tradecode='{el}'"
+    sqlsubstr_2 = sqlsubstr_2 + f"p.tradecode='{el}'"
     if lst.index(el) < len(lst) - 1:
       sqlsubstr_2 = sqlsubstr_2 + " OR "
     else:
@@ -59,9 +61,9 @@ def ultimates_by_lob_tradecodelist_uy_cursor(*_, lob, tradecodelist, claims_tabl
   # aggregate premium for lob - tradecodes - uy combos
   sqlsubstrpremium = sql_builder_premium_where_tradecodelist(lob, tradecodelist, premium_table='premium')
   # link aggregated claims with aggregated premium and add ieulrs and ftu
-  sqlstr = f"""SELECT p.lob, p.tradecode, p.uy, sub.dev_q, p.gwp_, sub.incd, i.ieulr, pat.FTU, sub.incd*pat.ftu as bcl, sub.incd + ((1-(1/pat.ftu)) * i.ieulr * p.gwp_) as bf, ex.expense, (sub.incd + ((1-(1/pat.ftu)) * i.ieulr * p.gwp_))/p.gwp_ + ex.expense as cor 
+  sqlstr = f"""SELECT p.lob, p.uy, sub.dev_q, p.gwp_, sub.incd, i.ieulr, pat.FTU, sub.incd*pat.ftu as bcl, sub.incd + ((1-(1/pat.ftu)) * i.ieulr * p.gwp_) as bf, ex.expense, (sub.incd + ((1-(1/pat.ftu)) * i.ieulr * p.gwp_))/p.gwp_ + ex.expense as cor 
   FROM ({sqlsubstrpremium}) as p
-  INNER JOIN ({sqlsubstr}) as sub ON p.tradecode=sub.tradecode AND p.lob=sub.lob AND p.uy=sub.uy
+  INNER JOIN ({sqlsubstr}) as sub ON p.lob=sub.lob AND p.uy=sub.uy
   INNER JOIN ieulrs as i ON sub.uy = i.uy AND sub.lob = i.lob 
   INNER JOIN patterns as pat ON sub.dev_q = pat.dev and sub.lob = pat.lob
   LEFT JOIN expenses as ex ON sub.lob = ex.lob AND sub.uy = ex.uy
@@ -72,12 +74,14 @@ def ultimates_by_lob_tradecodelist_uy_cursor(*_, lob, tradecodelist, claims_tabl
 def ultimates_by_lob_multiple_tradecodes_uy(lob, tradecodelist, claims_table='claims', premium_table='premium') -> pd.DataFrame:
   result = ultimates_by_lob_tradecodelist_uy_cursor(lob=lob, tradecodelist=tradecodelist, claims_table=claims_table, premium_table=premium_table)
   #result is a list of tuples
-  columns = ['lob', 'tradecode', 'uy', 'dev', 'gwp', 'incd', 'ieulr', 'ftu', 'bcl', 'bf', 'exp', 'cor']
+  columns = ['lob', 'uy', 'dev', 'gwp', 'incd', 'ieulr', 'ftu', 'bcl', 'bf', 'exp', 'cor']
   df_combos = pd.DataFrame(result)
   df_combos.columns = columns
   return df_combos
 
 
+# functions for lob - tradecode combos
+# ------------------------------------
 @decs.execute_sql('runquery')
 def ultimates_by_lob_tradecode_uy_cursor(*_, lob, tradecode, claims_table='claims', premium_table='premium'):
   # sqlstr will have no ? in it, so args must be empty
@@ -131,7 +135,8 @@ def tradecodes_used_cursor(*_, lob, premium_threshold=0, claims_table="claims", 
   """
   return sqlstr
 
-
+# functions for used_tradecodes
+#------------------------------
 def tradecodes_used(lob, premium_threshold=0, claims_table="claims", premium_table="premium") -> None:
   clean_table(tablename='used_tradecodes')
   result = tradecodes_used_cursor(lob=lob, premium_threshold=premium_threshold, claims_table=claims_table, premium_table=premium_table)
@@ -147,6 +152,7 @@ def tradecodes_used(lob, premium_threshold=0, claims_table="claims", premium_tab
       tablename='used_tradecodes'
       )
   return None
+
 
 @decs.execute_sql('runquery')
 def get_FTU_cursor(*_, lob, dev):
@@ -185,6 +191,7 @@ if __name__ == "__main__":
   #print(sql_builder_claims_where_tradecodelist("Onshore",
   #'tr1',
   #claims_table='claims'))
+  #print(ultimates_by_lob_tradecodelist_uy_cursor(lob='Onshore', tradecodelist=['tr1','tr5','tr7'], claims_table='claims', premium_table='premium'))
   print(ultimates_by_lob_multiple_tradecodes_uy('Onshore',['tr1','tr6','tr9','tr5']))
   
   
