@@ -1,6 +1,38 @@
 import pandas as pd
-from mysqldb import insert_record, clean_table
+from mysqldb import insert_record , clean_table
+# if imported here, they can be imported through functions
 import decorators as decs
+
+# functions to read output table
+#-------------------------------
+@decs.execute_sql('runquery')
+def output_table(lob, tradecode) -> str:
+  return """SELECT * 
+  FROM output
+  WHERE lob = ? AND tradecode = ?
+  """
+
+@decs.execute_sql('runquery')
+def ouput_table_grouped_cursor() -> str:
+  # named arguments passed into f-string
+  return """SELECT lob, tradecode
+  FROM output
+  GROUP BY lob, tradecode
+   """
+
+def output_table_grouped() -> pd.DataFrame:
+  df = pd.DataFrame(ouput_table_grouped_cursor())
+  df.columns = ['lob','tradecode']
+  return df
+
+
+def result_to_output_df(result: list) -> pd.DataFrame:
+  columns = ['lob', 'tradecode', 'uy', 'dev', 'gwp', 'incd', 'ieulr', 'ftu', 'bcl', 'bf', 'exp', 'cor']
+  df = pd.DataFrame(result)
+  df.columns = columns
+  return df
+  
+
 
 # functions to read used_tradecodes table
 #----------------------------------------
@@ -20,6 +52,7 @@ def load_used_tradecodes() -> pd.DataFrame:
   df = pd.DataFrame(results)
   df.columns = ['lob', 'tradecode','gwp']
   return df
+
 
 # functions to read existing lobs
 # --------------------------------
@@ -210,6 +243,10 @@ def get_ieulr(lob, uy):
   results=get_ieulr_cursor(lob=lob, uy=uy)
   return float(results[0][0])
 
+
+def print_to_shell(df: pd.DataFrame) -> None:
+  for i, row in df.iterrows():
+    print(i, row)
 
 if __name__ == "__main__":
   pass

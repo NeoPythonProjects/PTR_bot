@@ -11,16 +11,17 @@ def connect_to_db():
   return conn
 
 def create_db():
-  conn = connect_to_db()
-  cur = conn.cursor()
-  create_table_claims(conn, cur)
-  create_table_premium(conn, cur)
-  create_table_expenses(conn, cur)
-  create_table_patterns(conn, cur)
-  create_table_ieulrs(conn, cur)
-  create_table_lobs(conn, cur)
-  create_table_used_tradecodes(conn, cur)
-  conn.close()
+  create_table_claims()
+  create_table_premium()
+  create_table_expenses()
+  create_table_patterns()
+  create_table_ieulrs()
+  create_table_lobs()
+  create_table_used_tradecodes()
+  create_table_output()
+  create_table_cor_kpi()
+  create_table_trend_kpi()
+  create_table_tradecodelists()
   return None
 
 @decs.execute_sql('write')
@@ -125,6 +126,40 @@ def create_table_output() -> str:
   )"""
   return sqlstr
 
+@decs.execute_sql('write')
+def create_table_cor_kpi() -> str:
+  #columns = ['lob', 'tradecode', 'uy', 'dev', 'gwp', 'incd', 'ieulr', 'ftu', 'bcl', 'bf', 'exp', 'cor']
+  sqlstr = """CREATE TABLE IF NOT EXISTS cor_kpi (
+    lob VARCHAR(255),
+    tradecode VARCHAR(255),
+    uy INT,
+    dev_q INT,
+    gwp DOUBLE,
+    incd DOUBLE,
+    ieulr DOUBLE,
+    ftu DOUBLE,
+    bcl DOUBLE,
+    bf DOUBLE,
+    exp DOUBLE,
+    cor DOUBLE
+  )"""
+  return sqlstr
+
+
+@decs.execute_sql('write')
+def create_table_trend_kpi() -> str:
+  sqlstr = """CREATE TABLE IF NOT EXISTS trend_kpi (
+    stat VARCHAR(10),
+    lob VARCHAR(255),
+    tradecode VARCHAR(255),
+    trend TEXT,
+    slope DOUBLE,
+    x_values TEXT,
+    y_values TEXT
+  )"""
+  return sqlstr
+
+
 
 @decs.execute_sql('write')
 def create_table_tradecodelists() -> str:
@@ -133,6 +168,7 @@ def create_table_tradecodelists() -> str:
     tradecodelist VARCHAR(255)
   )"""
   return sqlstr
+
 
 #sub functions
 #-------------
@@ -384,20 +420,13 @@ if __name__ == "__main__":
   #upload_lobs_csv()
   #upload_patterns_csv()
   #show_table(tablename='used_tradecodes', limit=100000000)
-  #print("--------")
-  #show_table("premium",limit=5)
-  #print("--------")
-  #show_table("expenses",limit=10)
-  #print("--------")
-  #show_table("patterns")
-  #print("--------")
-  #show_table("ieulrs",100)
   #show_table('lobs')
   #print(show_field_names())
   #create_table_used_tradecodes(conn, cur)
-  show_table(tablename='output', limit=10000000)
+  #show_table(tablename='output', limit=10000000)
   #update_premium()
   #create_table_output()
-  #create_table_tradecodelists()
+  delete_table(tablename='trend_kpi')
+  create_table_trend_kpi()
   #insert_record("Offshore","['tr15','tr16']", tablename="tradecodelists")
   #show_table(tablename='tradecodelists')

@@ -1,5 +1,6 @@
 import pandas as pd
 import functions
+import kpi
 
 
 def main() -> None:
@@ -7,8 +8,8 @@ def main() -> None:
   #store_used_tradecodes()
   #loop_through_lob_tradecode_combos()
   #print("end of loop")
-  loop_through_user_defined_tradecode_lists()
-
+  #loop_through_user_defined_tradecode_lists()
+  run_statistics(1, 0.04)
 
 
 def store_used_tradecodes() -> None:
@@ -97,18 +98,58 @@ def loop_through_user_defined_tradecode_lists():
       )
 
 
+def run_statistics(cor_threshold: float, trend_threshold: float) -> pd.DataFrame:
+  """ function runs statistics on 
+  1. cor: exceeding cor_threshold
+  2. ieulr and bf ulr trends for slope exceeding trend_threshold
+  """
+  functions.clean_table(tablename='cor_kpi')
+  functions.clean_table(tablename='trend_kpi')
 
-
-# the output is? build in an option
-# massive table with all combos?
-# exceptions only?
-# trends?
-
-#if output is all, i would stick in table
-# in sqlite3 that's record by record, but in sqlalchemy
-# i think you can import a whole dataframe into a table in one go
-  
-  
+  #cor test is performed on total output table
+  df_cor = kpi.cor_exceeds_threshold(cor_threshold)
+  for i, resultrow in df_cor.iterrows():
+    functions.insert_record(
+      resultrow['lob'],
+      resultrow['tradecode'],
+      resultrow['uy'],
+      resultrow['dev'],
+      resultrow['gwp'],
+      resultrow['incd'],
+      resultrow['ieulr'],
+      resultrow['ftu'],
+      resultrow['bcl'],
+      resultrow['bf'],
+      resultrow['exp'],
+      resultrow['cor'],
+      tablename='cor_kpi'
+    )
+  # trend tests are performed at lob-tradecode level
+  # run through existing lob-tradecode combos
+  # retrieve them from output table to automatically include the user-defined tradecode lists
+  df = functions.output_table_grouped()
+  for i, row in df.iterrows():
+    for stat in ['cor','ieulr','ulr']:
+      res = kpi.trend_slope(row['lob'], row['tradecode'], stat)
+      for j,resultrow in res.iterrows():
+        if (float(resultrow[0]) < -(trend_threshold)) or (float(resultrow[0]) > trend_threshold):
+          if float(resultrow[0]) > trend_threshold:
+            #upward trend kpi
+            trend_kpi = 'up'
+          else:
+            #downward trend kpi
+            trend_kpi = 'down'
+          
+          functions.insert_record(
+            stat,
+            row['lob'],
+            row['tradecode'],
+            trend_kpi,
+            resultrow[0],
+            resultrow[1],
+            resultrow[2],
+            tablename='trend_kpi'
+          )
 
 
 if __name__ == "__main__":
