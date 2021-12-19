@@ -26,7 +26,11 @@ Table of Contents
 3.2. Database
 -------------
 
+decorator -> function split in 2: one to retrieve the cursor object, one to use the curson object
+the first return a string to feed the decorator; the decorator then returns a cursor object; hence teh -> cursor and not -> str
+
 sqlstr builder
+
 
 3.3. Decorators
 --------------

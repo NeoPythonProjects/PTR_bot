@@ -2,7 +2,27 @@ import pandas as pd
 from mysqldb import insert_record, clean_table
 import decorators as decs
 
+# functions to read used_tradecodes table
+#----------------------------------------
+@decs.execute_sql('runquery')
+def load_used_tradecodes_cursor():
+  """function retrieves existing lob-tradecode combos from the used_tradecodes table
 
+  returns a sqlite3 cursor object
+  """
+  return "SELECT * FROM used_tradecodes"
+
+
+def load_used_tradecodes() -> pd.DataFrame:
+  """function converts used_tradecodes cursor object to pandas DataFrame
+  """
+  results = load_used_tradecodes_cursor()
+  df = pd.DataFrame(results)
+  df.columns = ['lob', 'tradecode','gwp']
+  return df
+
+# functions to read existing lobs
+# --------------------------------
 @decs.execute_sql('runquery')
 def load_lobs_cursor():
   """function retrieves existing lobs
@@ -14,6 +34,8 @@ def load_lobs_cursor():
   
 
 def load_lobs() -> list:
+  """function converts load_lobs cursor object into a list of elements, not tuples
+  """
   results = load_lobs_cursor()
   #results is a list of tuples [('Onshore',),('EA',)]
   #list comprehension to extract element from tuple
@@ -50,10 +72,7 @@ def sql_builder_premium_where_tradecodelist(lob, lst,premium_table='premium') ->
 
 @decs.execute_sql('runquery')
 def ultimates_by_lob_tradecodelist_uy_cursor(*_, lob, tradecodelist, claims_table='claims', premium_table='premium'):
-  #TODO
-  # START HERE
-  
-  # sqlstr will have no ? in it, so args must be empty
+   # sqlstr will have no ? in it, so args must be empty
   # for the decorator to work
   # -> make all arguments named arguments
   # aggregate claims for lob - tradecodes - uy combos
@@ -79,6 +98,16 @@ def ultimates_by_lob_multiple_tradecodes_uy(lob, tradecodelist, claims_table='cl
   df_combos.columns = columns
   return df_combos
 
+@decs.execute_sql('runquery')
+def load_tradecodelists_cursor() -> str:
+  return "SELECT * FROM tradecodelists"
+
+
+def load_tradecodelists() -> pd.DataFrame:
+  result = load_tradecodelists_cursor()
+  df = pd.DataFrame(result)
+  df.columns = ['lob', 'tradecodelist']
+  return df
 
 # functions for lob - tradecode combos
 # ------------------------------------
@@ -134,11 +163,11 @@ def tradecodes_used_cursor(*_, lob, premium_threshold=0, claims_table="claims", 
   WHERE p.gwp_ > {premium_threshold}  
   """
   return sqlstr
+  
 
 # functions for used_tradecodes
 #------------------------------
 def tradecodes_used(lob, premium_threshold=0, claims_table="claims", premium_table="premium") -> None:
-  clean_table(tablename='used_tradecodes')
   result = tradecodes_used_cursor(lob=lob, premium_threshold=premium_threshold, claims_table=claims_table, premium_table=premium_table)
   #result = list of tuples (tradecode, sum(gwp))
   #this is run at the start of the process

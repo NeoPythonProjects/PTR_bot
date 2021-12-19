@@ -106,6 +106,34 @@ def create_table_used_tradecodes() -> str:
   return sqlstr
 
 
+@decs.execute_sql('write')
+def create_table_output() -> str:
+  #columns = ['lob', 'tradecode', 'uy', 'dev', 'gwp', 'incd', 'ieulr', 'ftu', 'bcl', 'bf', 'exp', 'cor']
+  sqlstr = """CREATE TABLE IF NOT EXISTS output (
+    lob VARCHAR(255),
+    tradecode VARCHAR(255),
+    uy INT,
+    dev_q INT,
+    gwp DOUBLE,
+    incd DOUBLE,
+    ieulr DOUBLE,
+    ftu DOUBLE,
+    bcl DOUBLE,
+    bf DOUBLE,
+    exp DOUBLE,
+    cor DOUBLE
+  )"""
+  return sqlstr
+
+
+@decs.execute_sql('write')
+def create_table_tradecodelists() -> str:
+  sqlstr = """CREATE TABLE IF NOT EXISTS tradecodelists (
+    lob VARCHAR(255),
+    tradecodelist VARCHAR(255)
+  )"""
+  return sqlstr
+
 #sub functions
 #-------------
 # sqlstr builder for INSERT statements
@@ -192,12 +220,12 @@ def delete_table(*_, tablename):
   return sqlstr
 
 
-def get_cursor(conn):
-  return conn.cursor()  
+# def get_cursor(conn):
+#   return conn.cursor()  
 
 
-def get_query_results(cur):
-  return cur.fetchall()  
+# def get_query_results(cur):
+#   return cur.fetchall()  
 
 
 #inserting records
@@ -215,48 +243,6 @@ def insert_record(*args, tablename) -> str:
   decorated with execute_sql('write') for database interaction
   """
   return build_insert_sqlstr(*args, tablename=tablename)
-
-
-# @decs.execute_sql('write')
-# def insert_record_claims(claim_id, uy, paid, case_, reported, date_open, date_current, lob, tradecode, dim2, dim3, claim_type, dev_q) -> str:
-#   sqlstr = """INSERT INTO claims VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"""
-#   return sqlstr
-
-
-# @decs.execute_sql('write')
-# def insert_record_premium(uy, lob, tradecode, dim2, dim3, gwp,policies) -> str:
-#   sqlstr = "INSERT INTO premium VALUES (?,?,?,?,?,?,?)"  
-#   return sqlstr
-
-
-# @decs.execute_sql('write')
-# def insert_record_expenses(uy, lob, expense) -> str:
-#   sqlstr = "INSERT INTO expenses VALUES (?,?,?)"
-#   return sqlstr
-
-
-# @decs.execute_sql('write')
-# def insert_record_patterns(lob, dev, FTU) -> str:
-#   sqlstr = """INSERT INTO patterns VALUES (?,?,?)"""
-#   return sqlstr
-
-
-# @decs.execute_sql('write')
-# def insert_record_ieulrs(uy, lob, ieulr) -> str:
-#   sqlstr = "INSERT INTO ieulrs VALUES (?,?,?)"
-#   return sqlstr
-
-
-# @decs.execute_sql('write')
-# def insert_record_lobs(lob) -> str:
-#   sqlstr = "INSERT INTO lobs VALUES (?)"
-#   return sqlstr
-
-
-# @decs.execute_sql('write')
-# def insert_record_used_tradecodes(lob, tradecode, gwp) -> str:
-#   sqlstr = "INSERT INTO used_tradecodes VALUES (?,?,?)"
-#   return sqlstr
 
 
 #uploading csv files
@@ -397,7 +383,7 @@ if __name__ == "__main__":
   #upload_ieulrs_csv()
   #upload_lobs_csv()
   #upload_patterns_csv()
-  show_table(tablename='used_tradecodes', limit=10)
+  #show_table(tablename='used_tradecodes', limit=100000000)
   #print("--------")
   #show_table("premium",limit=5)
   #print("--------")
@@ -407,7 +393,11 @@ if __name__ == "__main__":
   #print("--------")
   #show_table("ieulrs",100)
   #show_table('lobs')
-  #print(show_field_names('files/db.db','premium'))
+  #print(show_field_names())
   #create_table_used_tradecodes(conn, cur)
-  #show_table('patterns', limit=10)
+  show_table(tablename='output', limit=10000000)
   #update_premium()
+  #create_table_output()
+  #create_table_tradecodelists()
+  #insert_record("Offshore","['tr15','tr16']", tablename="tradecodelists")
+  #show_table(tablename='tradecodelists')
