@@ -131,25 +131,24 @@ def run_statistics(cor_threshold: float, trend_threshold: float) -> pd.DataFrame
   for i, row in df.iterrows():
     for stat in ['cor','ieulr','ulr']:
       res = kpi.trend_slope(row['lob'], row['tradecode'], stat)
-      for j,resultrow in res.iterrows():
-        if (float(resultrow[0]) < -(trend_threshold)) or (float(resultrow[0]) > trend_threshold):
-          if float(resultrow[0]) > trend_threshold:
-            #upward trend kpi
-            trend_kpi = 'up'
-          else:
-            #downward trend kpi
-            trend_kpi = 'down'
-          
-          functions.insert_record(
-            stat,
-            row['lob'],
-            row['tradecode'],
-            trend_kpi,
-            resultrow[0],
-            resultrow[1],
-            resultrow[2],
-            tablename='trend_kpi'
-          )
+      if (float(res[0]) < -(trend_threshold)) or (float(res[0]) > trend_threshold):
+        if float(res[0]) > trend_threshold:
+          #upward trend kpi
+          trend_kpi = 'up'
+        else:
+          #downward trend kpi
+          trend_kpi = 'down'
+        #x_values and y_values arrays stored as text in one field
+        functions.insert_record(
+          stat,
+          row['lob'],
+          row['tradecode'],
+          trend_kpi,
+          res[0],
+          str(res[1]),
+          str(res[2]),
+          tablename='trend_kpi'
+        )
 
 
 if __name__ == "__main__":
